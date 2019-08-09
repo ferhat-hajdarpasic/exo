@@ -19,3 +19,4 @@ https://github.com/sogilis/react-native-bluetooth-manager
 - https://github.com/sebawita/nativescript-mip-simple-ng
 - https://www.nativescript.org/blog/the-powers-of-nativescript-and-the-nativescript-playground
 - https://play.nativescript.org/
+- https://github.com/EddyVerbruggen/nativescript-bluetooth-demo
