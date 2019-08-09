@@ -15,4 +15,5 @@ https://developers.google.com/web/updates/2015/07/interact-with-ble-devices-on-t
 https://github.com/sogilis/react-native-bluetooth-manager
 
 # Nativescript
-> https://www.nativescript.org/blog/controlling-robots-with-nativescript-bluetooth
+- https://www.nativescript.org/blog/controlling-robots-with-nativescript-bluetooth
+- https://github.com/sebawita/nativescript-mip-simple-ng
