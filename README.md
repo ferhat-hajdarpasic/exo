@@ -20,3 +20,4 @@ https://github.com/sogilis/react-native-bluetooth-manager
 - https://www.nativescript.org/blog/the-powers-of-nativescript-and-the-nativescript-playground
 - https://play.nativescript.org/
 - https://github.com/EddyVerbruggen/nativescript-bluetooth-demo
+- https://medium.com/@adrianfaciu/creating-a-mobile-app-for-a-smart-light-bulb-with-nativescript-angular-1a36b3f658
