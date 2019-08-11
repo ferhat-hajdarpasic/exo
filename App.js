@@ -31,6 +31,8 @@ const red = 1;
 const green = 2;
 const buzzer = 4;
 
+const remote = 1;
+
 export default class App extends Component {
   constructor() {
     super()
@@ -128,15 +130,6 @@ export default class App extends Component {
               if(service.uuid == serviceUUID && characteristicDataUUID == characteristic.uuid) {
                 this.setState({connected: true, scanning: false});
                 this.m_connectedDevice = discoveredDevice;
-                let configuration  = await this.readConfigurationBytes();
-                console.log(`FRED value=${configuration[0]}`);
-
-                await this.writeConfiguration([1]);
-
-                configuration  = await this.readConfigurationBytes();
-                console.log(`FRED value=${configuration[0]}`);
-
-                await this.writeDataBytes([green]);
               }
             }
           }
@@ -167,6 +160,18 @@ export default class App extends Component {
   writeDataBytes = async (data) => {
     const dataBase64 = Buffer.from(data).toString('base64');
     await this.m_connectedDevice.writeCharacteristicWithResponseForService(serviceUUID, characteristicDataUUID, dataBase64);
+  }
+
+  setIO = async (io) => {
+    let configuration  = await this.readConfigurationBytes();
+    console.log(`FRED value=${configuration[0]}`);
+
+    await this.writeConfiguration([remote]);
+
+    // configuration  = await this.readConfigurationBytes();
+    // console.log(`FRED value=${configuration[0]}`);
+
+    await this.writeDataBytes([io]);
   }
 
   handleAppStateChange(nextAppState) {
@@ -244,19 +249,30 @@ export default class App extends Component {
     );
   };
 
+  
   render() {
+
+    let IObutton = (props) => {
+      return <TouchableHighlight style={{ marginTop: 0, margin: 10, padding: 2, backgroundColor: '#ccc' }} onPress={async () => await this.setIO(props.value)}>
+      <Text>{props.text}</Text>
+    </TouchableHighlight>
+    }
     const list = Array.from(this.state.peripherals.values());
     //const dataSource = ds.cloneWithRows(list);
 
-
     return (
       <View style={styles.container}>
-        <TouchableHighlight style={{ marginTop: 40, margin: 20, padding: 20, backgroundColor: '#ccc' }}>
+        <TouchableHighlight style={{ marginTop: 4, margin: 2, padding: 2, backgroundColor: '#ccc' }}>
           <Text> ({this.state.scanning ? 'Scanning' : 'Not scanning'}) ({this.state.connected ? 'Connected' : 'Not connected'})</Text>
         </TouchableHighlight>
-        <TouchableHighlight style={{ marginTop: 0, margin: 20, padding: 20, backgroundColor: '#ccc' }} onPress={async () => await this.toggleConnect()}>
+        <TouchableHighlight style={{ marginTop: 4, margin: 10, padding: 2, backgroundColor: '#ccc' }} onPress={async () => await this.toggleConnect()}>
           <Text>({this.state.connected ? 'Disconnect' : 'Connect'})</Text>
         </TouchableHighlight>
+
+        <IObutton text="RED" value={1} />
+        <IObutton text="GREEN" value={2} />
+        <IObutton text="BUZZER" value={4} />
+        
         <ScrollView style={styles.scroll}>
           {(list.length == 0) &&
             <View style={{ flex: 1, margin: 20 }}>
