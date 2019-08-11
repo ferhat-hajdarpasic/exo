@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 //import BleManager from 'react-native-ble-manager';
 import { BleManager } from 'react-native-ble-plx';
+import { Buffer } from 'buffer';
 
 
 const window = Dimensions.get('window');
@@ -26,6 +27,9 @@ const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
 const serviceUUID = 'f000aa64-0451-4000-b000-000000000000';
 const characteristicDataUUID = 'f000aa65-0451-4000-b000-000000000000';
 const characteristicConfigUUID = 'f000aa66-0451-4000-b000-000000000000';
+const red = 1;
+const green = 2;
+const buzzer = 4;
 
 export default class App extends Component {
   constructor() {
@@ -39,34 +43,12 @@ export default class App extends Component {
       appState: '',
       info: "", values: {}
     }
-    this.prefixUUID = "f000aa"
-    this.suffixUUID = "-0451-4000-b000-000000000000"
-    this.sensors = {
-      0: "Temperature",
-      1: "Accelerometer",
-      2: "Humidity",
-      3: "Magnetometer",
-      4: "Barometer",
-      5: "Gyroscope"
-    }
 
     this.handleDiscoverPeripheral = this.handleDiscoverPeripheral.bind(this);
     // this.handleStopScan = this.handleStopScan.bind(this);
     this.handleUpdateValueForCharacteristic = this.handleUpdateValueForCharacteristic.bind(this);
     this.handleDisconnectedPeripheral = this.handleDisconnectedPeripheral.bind(this);
     this.handleAppStateChange = this.handleAppStateChange.bind(this);
-  }
-
-  serviceUUID(num) {
-    return this.prefixUUID + num + "0" + this.suffixUUID
-  }
-
-  notifyUUID(num) {
-    return this.prefixUUID + num + "1" + this.suffixUUID
-  }
-
-  writeUUID(num) {
-    return this.prefixUUID + num + "2" + this.suffixUUID
   }
 
   componentDidMount() {
@@ -146,6 +128,15 @@ export default class App extends Component {
               if(service.uuid == serviceUUID && characteristicDataUUID == characteristic.uuid) {
                 this.setState({connected: true, scanning: false});
                 this.m_connectedDevice = discoveredDevice;
+                let configuration  = await this.readConfigurationBytes();
+                console.log(`FRED value=${configuration[0]}`);
+
+                await this.writeConfiguration([1]);
+
+                configuration  = await this.readConfigurationBytes();
+                console.log(`FRED value=${configuration[0]}`);
+
+                await this.writeDataBytes([green]);
               }
             }
           }
@@ -154,6 +145,28 @@ export default class App extends Component {
         };
       }
     });
+  }
+
+  readConfigurationBytes = async () => {
+    let ch = await this.m_connectedDevice.readCharacteristicForService(serviceUUID, characteristicConfigUUID);
+    let bytes = Buffer.from(ch.value, 'base64');
+    return bytes
+  }
+
+  readDataBytes = async () => {
+    let ch = await this.m_connectedDevice.readCharacteristicForService(serviceUUID, characteristicConfigUUID);
+    let bytes = Buffer.from(ch.value, 'base64');
+    return bytes
+  }
+
+  writeConfiguration = async (data) => {
+    const dataBase64 = Buffer.from(data).toString('base64');
+    await this.m_connectedDevice.writeCharacteristicWithResponseForService(serviceUUID, characteristicConfigUUID, dataBase64);
+  }
+
+  writeDataBytes = async (data) => {
+    const dataBase64 = Buffer.from(data).toString('base64');
+    await this.m_connectedDevice.writeCharacteristicWithResponseForService(serviceUUID, characteristicDataUUID, dataBase64);
   }
 
   handleAppStateChange(nextAppState) {
