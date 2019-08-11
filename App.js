@@ -31,7 +31,7 @@ export default class App extends Component {
   constructor() {
     super()
     this.manager = new BleManager();
-    //this.device = null;
+    this.m_connectedDevice = null;
     this.state = {
       scanning: false,
       connected: false,
@@ -78,6 +78,8 @@ export default class App extends Component {
       if (state === 'PoweredOn') {
         this.scanAndConnect();
         subscription.remove();
+      } else if(state === 'PoweredOff') {
+        console.log('Blutooth is turned off.');
       }
     }, true);
     //BleManager.start({showAlert: false});
@@ -86,7 +88,7 @@ export default class App extends Component {
     //this.handlerStop = bleManagerEmitter.addListener('BleManagerStopScan', this.handleStopScan );
     //this.handlerDisconnect = bleManagerEmitter.addListener('BleManagerDisconnectPeripheral', this.handleDisconnectedPeripheral );
     //this.handlerUpdate = bleManagerEmitter.addListener('BleManagerDidUpdateValueForCharacteristic', this.handleUpdateValueForCharacteristic );
-
+    // this.manager.onDeviceDisconnected()
 
 
     if (Platform.OS === 'android' && Platform.Version >= 23) {
@@ -143,31 +145,11 @@ export default class App extends Component {
               console.log(`characteristic id = ${characteristic.id}, uuid = ${characteristic.uuid}, isWritableWithoutResponse = ${characteristic.isWritableWithoutResponse}, isWritableWithResponse = ${characteristic.isWritableWithResponse}`);
               if(service.uuid == serviceUUID && characteristicDataUUID == characteristic.uuid) {
                 this.setState({connected: true, scanning: false});
+                this.m_connectedDevice = discoveredDevice;
               }
             }
           }
-
-          // for (const id in this.sensors) {
-          //   const service = this.serviceUUID(id)
-          //   const characteristicW = this.writeUUID(id)
-          //   const characteristicN = this.notifyUUID(id)
-
-          //   const characteristic = await device.writeCharacteristicWithResponseForService(
-          //     service, characteristicW, "AQ==" /* 0x01 in hex */
-          //   )
-
-          //   device.monitorCharacteristicForService(service, characteristicN, (error, characteristic) => {
-          //     if (error) {
-          //       this.error(error.message)
-          //       return
-          //     }
-          //     this.updateValue(characteristic.uuid, characteristic.value)
-          //   })
-          // }
-          // Do work on device with services and characteristics
-          console.log(`serviceUUIDs=${discoveredDevice.serviceUUIDs}`);
         } catch (error) {
-          // Handle errors
           console.log(`Error while discovering services ${error}`);
         };
       }
@@ -211,26 +193,20 @@ export default class App extends Component {
   //   ;
   // }
 
-  startScan() {
+  startScan = () => {
     if (!this.state.scanning) {
-      scanAndConnect();
+      this.scanAndConnect();
     }
   }
 
-  retrieveConnected() {
-    BleManager.getConnectedPeripherals([]).then((results) => {
-      if (results.length == 0) {
-        console.log('No connected peripherals')
-      }
-      console.log(results);
-      var peripherals = this.state.peripherals;
-      for (var i = 0; i < results.length; i++) {
-        var peripheral = results[i];
-        peripheral.connected = true;
-        peripherals.set(peripheral.id, peripheral);
-        this.setState({ peripherals });
-      }
-    });
+  toggleConnect = async () => {
+    if(this.m_connectedDevice) {
+      await this.m_connectedDevice.cancelConnection();
+      this.m_connectedDevice = null;
+      this.setState({connected: false});
+    } else {
+      this.startScan();
+    }
   }
 
   handleDiscoverPeripheral(peripheral) {
@@ -239,75 +215,6 @@ export default class App extends Component {
       console.log(`Got ble peripheral ${JSON.stringify(peripheral)}`);
       peripherals.set(peripheral.id, peripheral);
       this.setState({ peripherals })
-    }
-  }
-
-  test(peripheral) {
-    if (peripheral) {
-      if (peripheral.connected) {
-        BleManager.disconnect(peripheral.id);
-      } else {
-        BleManager.connect(peripheral.id).then(() => {
-          let peripherals = this.state.peripherals;
-          let p = peripherals.get(peripheral.id);
-          if (p) {
-            p.connected = true;
-            peripherals.set(peripheral.id, p);
-            this.setState({ peripherals });
-          }
-          console.log(`Connected to ${JSON.stringify(peripheral)}`);
-
-
-          setTimeout(() => {
-
-            /* Test read current RSSI value
-            BleManager.retrieveServices(peripheral.id).then((peripheralData) => {
-              console.log('Retrieved peripheral services', peripheralData);
-
-              BleManager.readRSSI(peripheral.id).then((rssi) => {
-                console.log('Retrieved actual RSSI value', rssi);
-              });
-            });*/
-
-            // Test using bleno's pizza example
-            // https://github.com/sandeepmistry/bleno/tree/master/examples/pizza
-            BleManager.retrieveServices(peripheral.id).then((peripheralInfo) => {
-              console.log(peripheralInfo);
-              var service = '13333333-3333-3333-3333-333333333337';
-              var bakeCharacteristic = '13333333-3333-3333-3333-333333330003';
-              var crustCharacteristic = '13333333-3333-3333-3333-333333330001';
-
-              setTimeout(() => {
-                BleManager.startNotification(peripheral.id, service, bakeCharacteristic).then(() => {
-                  console.log('Started notification on ' + peripheral.id);
-                  setTimeout(() => {
-                    BleManager.write(peripheral.id, service, crustCharacteristic, [0]).then(() => {
-                      console.log('Writed NORMAL crust');
-                      BleManager.write(peripheral.id, service, bakeCharacteristic, [1, 95]).then(() => {
-                        console.log('Writed 351 temperature, the pizza should be BAKED');
-                        /*
-                        var PizzaBakeResult = {
-                          HALF_BAKED: 0,
-                          BAKED:      1,
-                          CRISPY:     2,
-                          BURNT:      3,
-                          ON_FIRE:    4
-                        };*/
-                      });
-                    });
-
-                  }, 500);
-                }).catch((error) => {
-                  console.log('Notification error', error);
-                });
-              }, 200);
-            });
-
-          }, 900);
-        }).catch((error) => {
-          console.log('Connection error', error);
-        });
-      }
     }
   }
 
@@ -331,11 +238,11 @@ export default class App extends Component {
 
     return (
       <View style={styles.container}>
-        <TouchableHighlight style={{ marginTop: 40, margin: 20, padding: 20, backgroundColor: '#ccc' }} onPress={() => this.startScan()}>
+        <TouchableHighlight style={{ marginTop: 40, margin: 20, padding: 20, backgroundColor: '#ccc' }}>
           <Text> ({this.state.scanning ? 'Scanning' : 'Not scanning'}) ({this.state.connected ? 'Connected' : 'Not connected'})</Text>
         </TouchableHighlight>
-        <TouchableHighlight style={{ marginTop: 0, margin: 20, padding: 20, backgroundColor: '#ccc' }} onPress={() => this.retrieveConnected()}>
-          <Text>Retrieve connected peripherals</Text>
+        <TouchableHighlight style={{ marginTop: 0, margin: 20, padding: 20, backgroundColor: '#ccc' }} onPress={async () => await this.toggleConnect()}>
+          <Text>({this.state.connected ? 'Disconnect' : 'Connect'})</Text>
         </TouchableHighlight>
         <ScrollView style={styles.scroll}>
           {(list.length == 0) &&
