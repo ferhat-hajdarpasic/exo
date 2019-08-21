@@ -13,3 +13,11 @@ https://github.com/innoveit/react-native-ble-manager
 https://www.polidea.com/blog/ReactNative_and_Bluetooth_to_An_Other_level
 https://developers.google.com/web/updates/2015/07/interact-with-ble-devices-on-the-web
 https://github.com/sogilis/react-native-bluetooth-manager
+
+# Nativescript
+- https://www.nativescript.org/blog/controlling-robots-with-nativescript-bluetooth
+- https://github.com/sebawita/nativescript-mip-simple-ng
+- https://www.nativescript.org/blog/the-powers-of-nativescript-and-the-nativescript-playground
+- https://play.nativescript.org/
+- https://github.com/EddyVerbruggen/nativescript-bluetooth-demo
+- https://medium.com/@adrianfaciu/creating-a-mobile-app-for-a-smart-light-bulb-with-nativescript-angular-1a36b3f658
