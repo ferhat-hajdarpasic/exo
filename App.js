@@ -14,6 +14,8 @@ import {
   ScrollView,
   AppState,
   Dimensions,
+  Button,
+  Slider
 } from 'react-native';
 //import BleManager from 'react-native-ble-manager';
 import { BleManager } from 'react-native-ble-plx';
@@ -43,7 +45,12 @@ export default class App extends Component {
       connected: false,
       peripherals: new Map(),
       appState: '',
-      info: "", values: {}
+      info: "", values: {},
+      motors: [
+        { on: false, speed: 0 },
+        { on: false, speed: 0 },
+        { on: false, speed: 0 }
+      ]
     }
 
     this.handleDiscoverPeripheral = this.handleDiscoverPeripheral.bind(this);
@@ -62,7 +69,7 @@ export default class App extends Component {
       if (state === 'PoweredOn') {
         this.scanAndConnect();
         subscription.remove();
-      } else if(state === 'PoweredOff') {
+      } else if (state === 'PoweredOff') {
         console.log('Blutooth is turned off.');
       }
     }, true);
@@ -94,8 +101,8 @@ export default class App extends Component {
   }
 
   scanAndConnect = () => {
-        this.setState({ scanning: true });
-        this.manager.startDeviceScan(null, null, async (error, device) => {
+    this.setState({ scanning: true });
+    this.manager.startDeviceScan(null, null, async (error, device) => {
       if (error) {
         // Handle error (scanning will be stopped automatically)
         console.log(`Error ${error} while scanning`);
@@ -127,9 +134,11 @@ export default class App extends Component {
             console.log(`characteristics count = ${characteristics.length}`);
             for (let characteristic of characteristics) {
               console.log(`characteristic id = ${characteristic.id}, uuid = ${characteristic.uuid}, isWritableWithoutResponse = ${characteristic.isWritableWithoutResponse}, isWritableWithResponse = ${characteristic.isWritableWithResponse}`);
-              if(service.uuid == serviceUUID && characteristicDataUUID == characteristic.uuid) {
-                this.setState({connected: true, scanning: false});
+              if (service.uuid == serviceUUID && characteristicDataUUID == characteristic.uuid) {
+                this.setState({ connected: true, scanning: false });
                 this.m_connectedDevice = discoveredDevice;
+
+                this.handleDiscoverPeripheral(this.m_connectedDevice);
               }
             }
           }
@@ -163,15 +172,28 @@ export default class App extends Component {
   }
 
   setIO = async (io) => {
-    let configuration  = await this.readConfigurationBytes();
+    let configuration = await this.readConfigurationBytes();
     console.log(`FRED value=${configuration[0]}`);
-
     await this.writeConfiguration([remote]);
-
-    // configuration  = await this.readConfigurationBytes();
-    // console.log(`FRED value=${configuration[0]}`);
-
     await this.writeDataBytes([io]);
+  }
+
+  toggleMotor = async (number, value) => {
+    let motors = this.state.motors;
+    motors[number].on = !motors[number].on;
+    if (motors[number].on) {
+      await this.setIO(value);
+    } else {
+      await this.setIO(0);
+    }
+    this.setState({ motors: motors });
+  }
+
+  setMotorSpeed = async (number, value) => {
+    await this.setIO(0);
+    let motors = this.state.motors;
+    motors[number].speed = value;
+    this.setState({ motors: motors });
   }
 
   handleAppStateChange(nextAppState) {
@@ -191,17 +213,6 @@ export default class App extends Component {
     this.handlerUpdate.remove();
   }
 
-  handleDisconnectedPeripheral(data) {
-    let peripherals = this.state.peripherals;
-    let peripheral = peripherals.get(data.peripheral);
-    if (peripheral) {
-      peripheral.connected = false;
-      peripherals.set(peripheral.id, peripheral);
-      this.setState({ peripherals });
-    }
-    console.log('Disconnected from ' + data.peripheral);
-  }
-
   handleUpdateValueForCharacteristic(data) {
     console.log('Received data from ' + data.peripheral + ' characteristic ' + data.characteristic, data.value);
   }
@@ -218,61 +229,63 @@ export default class App extends Component {
   }
 
   toggleConnect = async () => {
-    if(this.m_connectedDevice) {
+    if (this.m_connectedDevice) {
+      this.handleDisconnectedPeripheral();
       await this.m_connectedDevice.cancelConnection();
       this.m_connectedDevice = null;
-      this.setState({connected: false});
+      this.setState({ connected: false });
     } else {
       this.startScan();
     }
   }
 
+  handleDisconnectedPeripheral() {
+    let peripherals = this.state.peripherals;
+    peripherals.clear();
+    this.setState({ peripherals });
+  }
+
   handleDiscoverPeripheral(peripheral) {
     var peripherals = this.state.peripherals;
     if (!peripherals.has(peripheral.id)) {
-      console.log(`Got ble peripheral ${JSON.stringify(peripheral)}`);
       peripherals.set(peripheral.id, peripheral);
       this.setState({ peripherals })
     }
   }
 
   renderItem = (item) => {
-    console.log(`Render item=${JSON.stringify(item.item)}`);
     const color = item.connected ? 'green' : '#fff';
+    let Motor = (props) => {
+      return <View style={{ flex: 1, flexDirection: 'row', padding: 4 }}>
+        <Button onPress={async () => await this.toggleMotor(props.number, props.value)}
+          title={this.state.motors[props.number].on ? "ON" : "OFF"} color={this.state.motors[props.number].on ? "steelblue" : "powderblue"} />
+        <Slider step={1} maximumValue={255} onSlidingComplete={async (value) => await this.setMotorSpeed(props.number, value)} value={this.state.motors[props.number].speed } style={{ flexGrow: 1 }} />
+      </View>
+    }
     return (
-      <TouchableHighlight onPress={() => this.test(item.item)}>
+      <TouchableHighlight>
         <View style={[styles.row, { backgroundColor: color }]}>
           <Text style={{ fontSize: 12, textAlign: 'center', color: '#333333', padding: 10 }}>{item.item.name}</Text>
           <Text style={{ fontSize: 8, textAlign: 'center', color: '#333333', padding: 10 }}>{item.item.id}</Text>
+          <Motor number='0' value={1} />
+          <Motor number='1' value={2} />
+          <Motor number='2' value={4} />
         </View>
       </TouchableHighlight>
     );
   };
 
-  
-  render() {
 
-    let IObutton = (props) => {
-      return <TouchableHighlight style={{ marginTop: 0, margin: 10, padding: 2, backgroundColor: '#ccc' }} onPress={async () => await this.setIO(props.value)}>
-      <Text>{props.text}</Text>
-    </TouchableHighlight>
-    }
+  render() {
     const list = Array.from(this.state.peripherals.values());
     //const dataSource = ds.cloneWithRows(list);
 
     return (
       <View style={styles.container}>
         <TouchableHighlight style={{ marginTop: 4, margin: 2, padding: 2, backgroundColor: '#ccc' }}>
-          <Text> ({this.state.scanning ? 'Scanning' : 'Not scanning'}) ({this.state.connected ? 'Connected' : 'Not connected'})</Text>
+          <Text> {this.state.scanning ? 'Scanning' : ''}{this.state.connected ? 'Connected' : ''}</Text>
         </TouchableHighlight>
-        <TouchableHighlight style={{ marginTop: 4, margin: 10, padding: 2, backgroundColor: '#ccc' }} onPress={async () => await this.toggleConnect()}>
-          <Text>({this.state.connected ? 'Disconnect' : 'Connect'})</Text>
-        </TouchableHighlight>
-
-        <IObutton text="RED" value={1} />
-        <IObutton text="GREEN" value={2} />
-        <IObutton text="BUZZER" value={4} />
-        
+        <Button onPress={async () => await this.toggleConnect()} title={this.state.connected ? 'Disconnect' : 'Connect'} color={this.state.connected ? 'steelblue' : 'powderblue'} />
         <ScrollView style={styles.scroll}>
           {(list.length == 0) &&
             <View style={{ flex: 1, margin: 20 }}>
