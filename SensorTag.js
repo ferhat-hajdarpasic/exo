@@ -24,7 +24,6 @@ export default class SensortTag extends Component {
   }
   constructor(props) {
     super(props)
-    // this.connectedDevice = props.connectedDevice;
     this.state = {
       motors: [
         { on: false, speed: 0 },
@@ -32,9 +31,6 @@ export default class SensortTag extends Component {
         { on: false, speed: 0 }
       ]
     }
-  }
-
-  componentDidMount() {
   }
 
   readConfigurationBytes = async () => {
@@ -82,9 +78,6 @@ export default class SensortTag extends Component {
     let motors = this.state.motors;
     motors[number].speed = value;
     this.setState({ motors: motors });
-  }
-
-  componentWillUnmount() {
   }
 
   render() {

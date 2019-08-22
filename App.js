@@ -33,7 +33,6 @@ export default class App extends Component {
 
     this.handleDiscoverPeripheral = this.handleDiscoverPeripheral.bind(this);
     // this.handleStopScan = this.handleStopScan.bind(this);
-    this.handleUpdateValueForCharacteristic = this.handleUpdateValueForCharacteristic.bind(this);
     this.handleDisconnectedPeripheral = this.handleDisconnectedPeripheral.bind(this);
     this.handleAppStateChange = this.handleAppStateChange.bind(this);
   }
@@ -74,7 +73,6 @@ export default class App extends Component {
     this.setState({ scanning: true });
     this.manager.startDeviceScan(null, null, async (error, device) => {
       if (error) {
-        // Handle error (scanning will be stopped automatically)
         console.log(`Error ${error} while scanning`);
         return
       }
@@ -82,17 +80,10 @@ export default class App extends Component {
       if (device.name) {
         console.log(`device: id = ${device.id}, name = ${device.name}`);
       }
-      // Check if it is a device you are looking for based on advertisement data
-      // or other criteria.
       if (SensortTag.isSensorTag(device)) {
-
         console.log('Found the device so stopping scanning');
-        // Stop scanning as it's not necessary if you are scanning for one device.
-        //this.device = device;
         this.manager.stopDeviceScan();
-
         try {
-          // Proceed with connection.
           let connectedDevice = await device.connect();
           let discoveredDevice = await connectedDevice.discoverAllServicesAndCharacteristics();
           let services = await discoveredDevice.services();
@@ -125,10 +116,6 @@ export default class App extends Component {
   componentWillUnmount() {
   }
 
-  handleUpdateValueForCharacteristic(data) {
-    console.log('Received data from ' + data.peripheral + ' characteristic ' + data.characteristic, data.value);
-  }
-
   startScan = () => {
     if (!this.state.scanning) {
       this.scanAndConnect();
@@ -139,7 +126,7 @@ export default class App extends Component {
     if (this.state.connectedDevice) {
       this.handleDisconnectedPeripheral();
       await this.state.connectedDevice.cancelConnection();
-      this.setState({ connected: false, connectedDevice: null });
+      this.setState({ scanning: false, connected: false, connectedDevice: null });
     } else {
       this.startScan();
     }
