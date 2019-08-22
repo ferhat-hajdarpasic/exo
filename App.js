@@ -17,15 +17,12 @@ import {
   Button,
   Slider
 } from 'react-native';
-//import BleManager from 'react-native-ble-manager';
+
 import { BleManager } from 'react-native-ble-plx';
 import { Buffer } from 'buffer';
 
-
 const window = Dimensions.get('window');
 
-const BleManagerModule = NativeModules.BleManager;
-const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
 const serviceUUID = 'f000aa64-0451-4000-b000-000000000000';
 const characteristicDataUUID = 'f000aa65-0451-4000-b000-000000000000';
 const characteristicConfigUUID = 'f000aa66-0451-4000-b000-000000000000';
@@ -73,14 +70,6 @@ export default class App extends Component {
         console.log('Blutooth is turned off.');
       }
     }, true);
-    //BleManager.start({showAlert: false});
-
-    //this.handlerDiscover = bleManagerEmitter.addListener('BleManagerDiscoverPeripheral', this.handleDiscoverPeripheral );
-    //this.handlerStop = bleManagerEmitter.addListener('BleManagerStopScan', this.handleStopScan );
-    //this.handlerDisconnect = bleManagerEmitter.addListener('BleManagerDisconnectPeripheral', this.handleDisconnectedPeripheral );
-    //this.handlerUpdate = bleManagerEmitter.addListener('BleManagerDidUpdateValueForCharacteristic', this.handleUpdateValueForCharacteristic );
-    // this.manager.onDeviceDisconnected()
-
 
     if (Platform.OS === 'android' && Platform.Version >= 23) {
       PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION).then((result) => {
@@ -199,9 +188,6 @@ export default class App extends Component {
   handleAppStateChange(nextAppState) {
     if (this.state.appState.match(/inactive|background/) && nextAppState === 'active') {
       console.log('App has come to the foreground!')
-      //BleManager.getConnectedPeripherals([]).then((peripheralsArray) => {
-      //  console.log('Connected peripherals: ' + peripheralsArray.length);
-      //});
     }
     this.setState({ appState: nextAppState });
   }
@@ -216,11 +202,6 @@ export default class App extends Component {
   handleUpdateValueForCharacteristic(data) {
     console.log('Received data from ' + data.peripheral + ' characteristic ' + data.characteristic, data.value);
   }
-
-  // handleStopScan() {
-  //   console.log('Scan is stopped');
-  //   ;
-  // }
 
   startScan = () => {
     if (!this.state.scanning) {
