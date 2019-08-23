@@ -40,11 +40,13 @@ export default class ExoWand extends Component {
     await this.props.connectedDevice.writeCharacteristicWithResponseForService(serviceUuid, characteristicDataUuid, dataBase64);
   }
 
-  setMotorSpeed = async (motorIndex, speed) => {
+  setMotorSpeedAndDuration = async (motorIndex, speed, duration) => {
     let motors = this.state.motors;
     if (motors[motorIndex].on) {
-        let bytes = Buffer.writeInt16BE(speed, 0);
-        await this.writeDataBytes(bytes, EXOWAND_SERVICE_UUID, MOTOR_UUIDS[motorIndex]);
+        const buffer = Buffer.allocUnsafe(4);
+        buffer.writeInt16BE(speed, 0);
+        buffer.writeInt16BE(duration, 2);
+        await this.writeDataBytes([...buffer], EXOWAND_SERVICE_UUID, MOTOR_UUIDS[motorIndex]);
     }
   }
 
@@ -64,7 +66,7 @@ export default class ExoWand extends Component {
       return <View style={{ flex: 1, flexDirection: 'row', padding: 4 }}>
         <Button onPress={async () => await this.toggleMotor(props.motorIndex, props.value)}
           title={this.state.motors[props.motorIndex].on ? "ON" : "OFF"} color={this.state.motors[props.motorIndex].on ? "steelblue" : "powderblue"} />
-        <Slider step={1} maximumValue={255} onSlidingComplete={async (value) => await this.setMotorSpeed(props.motorIndex, value)} 
+        <Slider step={1} maximumValue={255} onSlidingComplete={async (value) => await this.setMotorSpeedAndDuration(props.motorIndex, value)} 
           value={this.state.motors[props.motorIndex].speed} style={{ flexGrow: 1 }} />
       </View>
     }
