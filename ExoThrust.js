@@ -16,7 +16,7 @@ const CHARACTERISTIC_CONFIG_UUID = 'f000aa66-0451-4000-b000-000000000000';
 const remote = 1;
 
 export default class SensortTag extends Component {
-  static isDevice(device) {
+  static isSensorTag(device) {
     return device.name === 'CC2650 SensorTag' ||  device.name === 'SensorTag';
   }
   static isServiceAndCharacteristic(service, characteristic) {

@@ -80,7 +80,7 @@ export default class App extends Component {
       if (device.name) {
         console.log(`device: id = ${device.id}, name = ${device.name}`);
       }
-      if (SensortTag.isSensorTag(device)) {
+      if (SensortTag.isDevice(device)) {
         console.log('Found the device so stopping scanning');
         this.manager.stopDeviceScan();
         try {

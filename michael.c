@@ -48,7 +48,7 @@ static gattAttribute_t exoWandProfileAttrTbl[SERVAPP_NUM_ATTR_SUPPORTED] =     /
     // Characteristic Moto3 Declaration
     {{ ATT_BT_UUID_SIZE, characterUUID }, GATT_PERMIT_READ, 0, &exoWandProfileMoto3Props },
     // Characteristic Value Moto3
-    {{ ATT_BT_UUID_SIZE, exoWandProfileMoto3UUID }, GATT_PERMIT_READ | GATT_PERMIT_WRITE, 0,&exoWandProfileMoto3},
+    {{ ATT_BT_UUID_SIZE, exoWandProfileMoto3UUID }, GATT_PERMIT_READ | GATT_PERMIT_WRITE, 0,  &exoWandProfileMoto3},
     // Characteristic Thermo1 Declaration
     {{ ATT_BT_UUID_SIZE, characterUUID }, GATT_PERMIT_READ, 0, &exoWandProfileThermo1Props },
     // Characteristic Value Thermo1
